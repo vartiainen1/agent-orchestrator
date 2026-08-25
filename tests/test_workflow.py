@@ -1,3 +1,4 @@
+from orchestrator.workspace import find_workspace
 """Tests for orchestrator Phase 4 — workflow engine."""
 
 import json
@@ -291,7 +292,9 @@ class TestWorkflowEngine(unittest.TestCase):
     """WorkflowEngine execution."""
 
     def setUp(self):
-        self.ws = Path(__file__).resolve().parent.parent.parent
+        self.ws = find_workspace(Path(__file__).resolve().parent)
+        if self.ws is None:
+            self.skipTest("workspace not found")
 
     def test_engine_runs_bootstrap(self):
         """Integration: bootstrap workflow against real tools."""
@@ -372,7 +375,9 @@ class TestEngineIntegration(unittest.TestCase):
     """Integration tests against real tools."""
 
     def setUp(self):
-        self.ws = Path(__file__).resolve().parent.parent.parent
+        self.ws = find_workspace(Path(__file__).resolve().parent)
+        if self.ws is None:
+            self.skipTest("workspace not found")
 
     def test_doctor_workflow(self):
         """Doctor workflow runs all health checks."""
@@ -442,7 +447,9 @@ class TestEndToEndWorkflow(unittest.TestCase):
     """End-to-end: run a workflow and produce a report."""
 
     def setUp(self):
-        self.ws = Path(__file__).resolve().parent.parent.parent
+        self.ws = find_workspace(Path(__file__).resolve().parent)
+        if self.ws is None:
+            self.skipTest("workspace not found")
 
     def test_full_cycle(self):
         """Run doctor workflow, generate report, verify completeness."""

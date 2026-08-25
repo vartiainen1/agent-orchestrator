@@ -1,3 +1,4 @@
+from orchestrator.workspace import find_workspace
 """Tests for orchestrator Phase 5 — policy engine."""
 
 import tempfile
@@ -280,7 +281,9 @@ class TestEngineWithPolicy(unittest.TestCase):
     """WorkflowEngine with policy integration."""
 
     def setUp(self):
-        self.ws = Path(__file__).resolve().parent.parent.parent
+        self.ws = find_workspace(Path(__file__).resolve().parent)
+        if self.ws is None:
+            self.skipTest("workspace not found")
 
     def test_engine_records_policy_decisions(self):
         from orchestrator.engine import WorkflowEngine

@@ -1,3 +1,4 @@
+from orchestrator.workspace import find_workspace
 """Tests for orchestrator.discovery — Phase 2 tool discovery."""
 
 import tempfile
@@ -157,7 +158,9 @@ class TestDiscoverTool(unittest.TestCase):
 
     def test_valid_tool(self):
         """Test with the real agent-error-log if available."""
-        workspace = Path(__file__).resolve().parent.parent.parent
+        workspace = find_workspace(Path(__file__).resolve().parent)
+        if workspace is None:
+            self.skipTest("workspace not found")
         tool_dir = workspace / "agent-error-log"
         if not tool_dir.is_dir():
             self.skipTest("agent-error-log not found")
@@ -205,7 +208,7 @@ class TestDiscoverAll(unittest.TestCase):
     """discover_all scans all 7 tools."""
 
     def test_with_real_workspace(self):
-        workspace = Path(__file__).resolve().parent.parent.parent
+        workspace = find_workspace(Path(__file__).resolve().parent)
         if not (workspace / "agent-error-log").is_dir():
             self.skipTest("workspace not found")
         tools = discover_all(workspace)
@@ -305,7 +308,9 @@ class TestHealthCheck(unittest.TestCase):
     """_health_check runs safely."""
 
     def test_with_real_tool(self):
-        workspace = Path(__file__).resolve().parent.parent.parent
+        workspace = find_workspace(Path(__file__).resolve().parent)
+        if workspace is None:
+            self.skipTest("workspace not found")
         tool_dir = workspace / "agent-error-log"
         if not tool_dir.is_dir():
             self.skipTest("agent-error-log not found")
@@ -323,7 +328,7 @@ class TestNoSecrets(unittest.TestCase):
     """Discovery output must not accidentally contain secrets."""
 
     def test_no_api_keys_in_output(self):
-        workspace = Path(__file__).resolve().parent.parent.parent
+        workspace = find_workspace(Path(__file__).resolve().parent)
         if not (workspace / "agent-error-log").is_dir():
             self.skipTest("workspace not found")
         tools = discover_all(workspace)

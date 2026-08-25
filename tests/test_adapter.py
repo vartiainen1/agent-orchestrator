@@ -7,6 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from orchestrator.workspace import find_workspace
+
 from orchestrator.adapter import (
     ADAPTER_CLASSES,
     BaseAdapter,
@@ -144,7 +146,9 @@ class TestErrorLogAdapter(unittest.TestCase):
     """ErrorLogAdapter against the real tool."""
 
     def setUp(self):
-        ws = Path(__file__).resolve().parent.parent.parent
+        ws = find_workspace(Path(__file__).resolve().parent)
+        if ws is None:
+            self.skipTest("workspace not found")
         self.adapter = ErrorLogAdapter(ws)
         if not self.adapter.available:
             self.skipTest("agent-error-log not found")
@@ -174,7 +178,9 @@ class TestDecisionLogAdapter(unittest.TestCase):
     """DecisionLogAdapter against the real tool."""
 
     def setUp(self):
-        ws = Path(__file__).resolve().parent.parent.parent
+        ws = find_workspace(Path(__file__).resolve().parent)
+        if ws is None:
+            self.skipTest("workspace not found")
         self.adapter = DecisionLogAdapter(ws)
         if not self.adapter.available:
             self.skipTest("agent-decision-log not found")
@@ -198,7 +204,9 @@ class TestLogAIAdapter(unittest.TestCase):
     """LogAIAdapter against the real tool."""
 
     def setUp(self):
-        ws = Path(__file__).resolve().parent.parent.parent
+        ws = find_workspace(Path(__file__).resolve().parent)
+        if ws is None:
+            self.skipTest("workspace not found")
         self.adapter = LogAIAdapter(ws)
         if not self.adapter.available:
             self.skipTest("agent-log-ai not found")
@@ -219,7 +227,9 @@ class TestMemoryAdapter(unittest.TestCase):
     """MemoryAdapter against the real tool."""
 
     def setUp(self):
-        ws = Path(__file__).resolve().parent.parent.parent
+        ws = find_workspace(Path(__file__).resolve().parent)
+        if ws is None:
+            self.skipTest("workspace not found")
         self.adapter = MemoryAdapter(ws)
         if not self.adapter.available:
             self.skipTest("agent-memory not found")
@@ -240,7 +250,9 @@ class TestBlameAdapter(unittest.TestCase):
     """BlameAdapter against the real tool."""
 
     def setUp(self):
-        ws = Path(__file__).resolve().parent.parent.parent
+        ws = find_workspace(Path(__file__).resolve().parent)
+        if ws is None:
+            self.skipTest("workspace not found")
         self.adapter = BlameAdapter(ws)
         if not self.adapter.available:
             self.skipTest("agent-blame not found")
@@ -250,7 +262,8 @@ class TestBlameAdapter(unittest.TestCase):
 
     def test_diff_in_repo(self):
         # Run blame --diff in a real git repo
-        repo = ws = Path(__file__).resolve().parent.parent.parent / "agent-error-log"
+        ws = find_workspace(Path(__file__).resolve().parent)
+        repo = ws / "agent-error-log" if ws else Path(".")
         if not (repo / ".git").is_dir():
             self.skipTest("not a git repo")
         result = self.adapter.diff(cwd=repo)
@@ -264,7 +277,7 @@ class TestDiffGateAdapter(unittest.TestCase):
     """DiffGateAdapter against the real tool."""
 
     def setUp(self):
-        ws = Path(__file__).resolve().parent.parent.parent
+        ws = find_workspace(Path(__file__).resolve().parent)
         self.adapter = DiffGateAdapter(ws)
         if not self.adapter.available:
             self.skipTest("agent-diff-gate not found")
@@ -284,7 +297,9 @@ class TestSandboxAdapter(unittest.TestCase):
     """SandboxAdapter — platform-specific behavior."""
 
     def setUp(self):
-        ws = Path(__file__).resolve().parent.parent.parent
+        ws = find_workspace(Path(__file__).resolve().parent)
+        if ws is None:
+            self.skipTest("workspace not found")
         self.adapter = SandboxAdapter(ws)
 
     def test_unsupported_on_windows(self):
@@ -387,7 +402,9 @@ class TestIntegrationRealTools(unittest.TestCase):
     """Integration tests against real tools (skipped if not available)."""
 
     def setUp(self):
-        self.ws = Path(__file__).resolve().parent.parent.parent
+        self.ws = find_workspace(Path(__file__).resolve().parent)
+        if self.ws is None:
+            self.skipTest("workspace not found")
 
     def test_error_log_check_integration(self):
         adapter = ErrorLogAdapter(self.ws)
