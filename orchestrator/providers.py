@@ -163,7 +163,15 @@ class OllamaProvider:
         start = time.monotonic()
 
         if not model:
-            model = self._default_model()
+            try:
+                model = self._default_model()
+            except ValueError as exc:
+                duration = time.monotonic() - start
+                return ProviderResponse(
+                    status=ProviderStatus.UNAVAILABLE,
+                    duration=duration,
+                    error=str(exc),
+                )
 
         payload = json.dumps({
             "model": model,
@@ -225,17 +233,32 @@ class OllamaProvider:
             )
 
     def _default_model(self) -> str:
-        """Try to detect the default Ollama model."""
+        """Detect the default Ollama model.
+
+        Raises ValueError if Ollama is unreachable or has no models.
+        This is fail-closed: we never silently assume an unavailable model.
+        """
         try:
             req = urllib.request.Request(f"{self._base_url}/api/tags")
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 models = data.get("models", [])
                 if models:
-                    return models[0].get("name", "llama2")
-        except Exception:  # noqa: BLE001
-            pass
-        return "llama2"
+                    name = models[0].get("name", "")
+                    if name:
+                        return name
+                    raise ValueError("Ollama model has no name")
+                raise ValueError(
+                    "Ollama has no models pulled. "
+                    "Run 'ollama pull <model>' to install one."
+                )
+        except ValueError:
+            raise
+        except Exception as exc:
+            raise ValueError(
+                f"Cannot connect to Ollama at {self._base_url}. "
+                f"Ensure Ollama is running. Error: {exc}"
+            ) from exc
 
 
 # ── CLIProvider ──────────────────────────────────────────────────────────

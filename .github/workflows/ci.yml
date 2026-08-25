@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify zero external dependencies
+        run: |
+          python -c "
+          import ast, pathlib
+          stdlib = {
+              '__future__','argparse','sys','pathlib','os','re','json',
+              'datetime','dataclasses','enum','typing','subprocess','time',
+              'hashlib','secrets','uuid','threading','shutil','platform',
+              'inspect','traceback','io','collections','functools',
+              'tempfile','signal','urllib','urllib.request','urllib.error',
+              'http','http.server','webbrowser',
+          }
+          src = pathlib.Path('orchestrator')
+          errors = []
+          for f in src.glob('**/*.py'):
+              tree = ast.parse(f.read_text(encoding='utf-8'))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      for alias in node.names:
+                          if alias.name not in stdlib and not alias.name.startswith('orchestrator'):
+                              errors.append(f'{alias.name} in {f}')
+                  elif isinstance(node, ast.ImportFrom):
+                      if node.level and node.level > 0:
+                          continue
+                      if node.module and node.module not in stdlib and not node.module.startswith('orchestrator'):
+                          errors.append(f'{node.module} in {f}')
+          if errors:
+              for e in errors:
+                  print(f'EXTERNAL: {e}')
+              exit(1)
+          print('Zero external dependencies: PASS')
+          "
+
+      - name: Security scan
+        run: |
+          python -c "
+          import ast, pathlib
+          src = pathlib.Path('orchestrator')
+          counts = {'shell=True': 0, 'eval(': 0, 'exec(': 0, 'os.system': 0}
+          for f in src.glob('**/*.py'):
+              tree = ast.parse(f.read_text(encoding='utf-8'))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.keyword):
+                      if node.arg == 'shell' and isinstance(node.value, ast.Constant) and node.value.value is True:
+                          counts['shell=True'] += 1
+                  if isinstance(node, ast.Name) and node.id in ('eval', 'exec'):
+                      counts[node.id + '()'] += 1
+                  if isinstance(node, ast.Attribute) and node.attr == 'system' and isinstance(getattr(node, 'value', None), ast.Name) and node.value.id == 'os':
+                      counts['os.system'] += 1
+          failed = False
+          for k, v in counts.items():
+              status = 'PASS' if v == 0 else 'FAIL'
+              print(f'{k:15s} = {v} [{status}]')
+              if v > 0:
+                  failed = True
+          if failed:
+              exit(1)
+          print('Security scan: ALL PASS')
+          "
+
+      - name: Run test suite
+        run: python -m unittest discover -v
