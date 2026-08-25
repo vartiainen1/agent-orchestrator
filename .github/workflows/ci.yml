@@ -14,7 +14,50 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout agent-orchestrator
+        uses: actions/checkout@v4
+
+      - name: Checkout tool repositories
+        uses: actions/checkout@v4
+        with:
+          repository: vartiainen1/agent-error-log
+          path: agent-error-log
+
+      - name: Checkout agent-decision-log
+        uses: actions/checkout@v4
+        with:
+          repository: vartiainen1/agent-decision-log
+          path: agent-decision-log
+
+      - name: Checkout agent-log-ai
+        uses: actions/checkout@v4
+        with:
+          repository: vartiainen1/agent-log-ai
+          path: agent-log-ai
+
+      - name: Checkout agent-memory
+        uses: actions/checkout@v4
+        with:
+          repository: vartiainen1/agent-memory
+          path: agent-memory
+
+      - name: Checkout agent-blame
+        uses: actions/checkout@v4
+        with:
+          repository: vartiainen1/agent-blame
+          path: agent-blame
+
+      - name: Checkout agent-diff-gate
+        uses: actions/checkout@v4
+        with:
+          repository: vartiainen1/agent-diff-gate
+          path: agent-diff-gate
+
+      - name: Checkout agent-sandbox
+        uses: actions/checkout@v4
+        with:
+          repository: vartiainen1/agent-sandbox
+          path: agent-sandbox
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
