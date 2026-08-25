@@ -1,3 +1,4 @@
+from orchestrator.workspace import find_workspace
 """STEP 6 — Security Adversarial Tests.
 
 Actively attempts to break the orchestrator across 10 attack categories.
@@ -438,7 +439,7 @@ class TestSevenToolEcosystemAttacks(unittest.TestCase):
     def test_diff_gate_cannot_be_bypassed_by_output(self):
         """ATTACK BLOCKED: fake PASS in output doesn't bypass gate."""
         # The diff-gate adapter checks actual git state, not output text
-        adapter = get_adapter('agent-diff-gate', Path('..'))
+        adapter = get_adapter('agent-diff-gate', find_workspace(Path('.').resolve()) or Path('.'))
         result = adapter.check_staged()
         # Result is based on actual git state, not fabricated
         self.assertIsInstance(result, ToolResult)
@@ -446,7 +447,7 @@ class TestSevenToolEcosystemAttacks(unittest.TestCase):
 
     def test_error_log_cannot_be_bypassed(self):
         """ATTACK BLOCKED: error-log gate is enforced."""
-        adapter = get_adapter('agent-error-log', Path('..'))
+        adapter = get_adapter('agent-error-log', find_workspace(Path('.').resolve()) or Path('.'))
         result = adapter.has_entry('nonexistent-area-xyz')
         self.assertEqual(result.exit_code, 1)
         self.assertIn('GATE FAILED', result.stdout)
