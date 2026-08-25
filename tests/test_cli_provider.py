@@ -212,14 +212,13 @@ class TestCLIProviderOutputValidation(unittest.TestCase):
     def test_null_bytes_rejected(self):
         if os.name == "nt":
             self.skipTest("null bytes test not reliable on Windows")
-        script = self.tmpdir / "null-bytes"
-        script.write_text('#!/bin/sh\necho "hello\x00world"\n')
-        os.chmod(script, 0o755)
-        provider = CLIProvider(executable=str(script))
+        # Use Python to reliably produce null bytes (shell echo varies)
+        script = self.tmpdir / "null-bytes-test.py"
+        script.write_bytes(b'import sys\nimport os\nos.write(1, b"hello\x00world\n")\n')
+        provider = CLIProvider(executable=sys.executable, args=[str(script)])
         result = provider.complete("test")
         self.assertEqual(result.status, ProviderStatus.ERROR)
         self.assertIn("null bytes", result.error)
-
 
 class TestCLIProviderSecurity(unittest.TestCase):
 
