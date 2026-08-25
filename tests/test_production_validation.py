@@ -1,3 +1,4 @@
+from orchestrator.workspace import find_workspace
 """STEP 7 — Real-World Production Validation Tests.
 
 Creates a temporary project and exercises realistic workflows end-to-end.
@@ -30,7 +31,7 @@ from orchestrator.report import format_report, report_json, report_dict
 from orchestrator.discovery import discover_all
 
 
-WORKSPACE = Path(__file__).resolve().parent.parent / ".."
+WORKSPACE = find_workspace(Path(__file__).resolve().parent) or Path(".")
 
 
 def _make_completed_run(workflow_name='test', mode='solo'):
