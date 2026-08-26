@@ -1,93 +1,87 @@
 # agent-orchestrator
 
+[![CI](https://github.com/vartiainen1/agent-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/vartiainen1/agent-orchestrator/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0-orange.svg)](https://github.com/vartiainen1/agent-orchestrator/releases/tag/v0.1.0)
+
 Coordination layer for the 7-tool AI agent ecosystem.
 
-## What is agent-orchestrator?
+agent-orchestrator is the **control plane** that makes seven separate AI-agent tools operate as one coherent engineering workflow. It is **not** an AI model, **not** an AI provider, and **not** a replacement for any individual tool.
 
-agent-orchestrator is the **control plane** that makes seven separate AI-agent
-tools operate as one coherent engineering workflow. It is **not** an AI model,
-**not** an AI provider, and **not** a replacement for any individual tool.
+    orchestrator != AI model
+    orchestrator != AI provider
+    orchestrator != CLI transport
+    orchestrator != individual tool
 
-```
-orchestrator ≠ AI model
-orchestrator ≠ AI provider
-orchestrator ≠ CLI transport
-orchestrator ≠ individual tool
-```
+## Why It Exists
 
-The orchestrator coordinates:
+Modern AI-assisted development involves many independent tools: error tracking, decision logging, code review, memory, blame analysis, diff validation, and sandboxed execution. Each tool is useful alone, but coordinating them manually is tedious and error-prone.
 
-1. **agent-error-log** — error tracking and gate enforcement
-2. **agent-decision-log** — decision tracking with rationale
-3. **agent-log-ai** — deterministic analysis + LLM lesson extraction
-4. **agent-memory** — governed persistent knowledge with trust model
-5. **agent-blame** — Git archaeology and historical context
-6. **agent-diff-gate** — pre-commit diff validation and security checks
-7. **agent-sandbox** — isolated code execution boundary
+agent-orchestrator solves this by providing a single coordination layer that:
 
-The orchestrator does **not** replace these tools. It coordinates them.
+- Discovers and invokes tools through a uniform adapter interface
+- Enforces security policies across all tool interactions
+- Manages multi-agent workflows with role-based permissions
+- Records evidence for every significant action
+- Supports four operating modes from lightweight to enterprise-grade
 
 ## Architecture
 
-```
-AI AGENT / CLI
-      ↓
-ORCHESTRATOR
-      ↓
-┌─────────────────┐
-│  Policy Engine   │  ← 4 modes: SOLO, DEVELOPMENT, SECURITY, ENTERPRISE
-├─────────────────┤
-│ Workflow Engine  │  ← 11 states, branching, gate enforcement
-├─────────────────┤
-│  Multi-Agent     │  ← 7 roles, scheduler, provider abstraction
-├─────────────────┤
-│  Evidence/Report │  ← append-only, persistence, Markdown + JSON
-├─────────────────┤
-│  Validation      │  ← path boundaries, tool output, security scanning
-└─────────────────┘
-      ↓
-┌─────────────────┐
-│ Tool Adapters    │  ← 7 adapters, 26+ operations, shell=False
-└─────────────────┘
-      ↓
-7 EXISTING TOOLS   ← unchanged, authoritative
-```
-
-## Supported AI Providers
-
-The orchestrator is **provider-agnostic**. It works with or without an AI
-provider. Four providers are included:
-
-| Provider | Type | API Key | Description |
-|----------|------|:-------:|-------------|
-| NoneProvider | Deterministic | No | No AI — agents produce deterministic output |
-| OllamaProvider | Local HTTP | No | Local Ollama models via HTTP |
-| CLIProvider | Generic CLI | No | Any CLI-based AI tool via subprocess |
-| FreebuffProvider | CLI (FreeBuff) | No | FreeBuff CLI — one supported provider |
-
-**No API key is required for local operation.**
-
-### Adding a custom provider
-
-See [docs/PROVIDERS.md](docs/PROVIDERS.md) for how to implement your own
-AI provider without modifying the core engine.
+    AI AGENT / CLI
+          |
+    ORCHESTRATOR
+          |
+    +-----------------+
+    |  Policy Engine   |  <- 4 modes: SOLO, DEVELOPMENT, SECURITY, ENTERPRISE
+    +-----------------+
+    | Workflow Engine  |  <- state machine, branching, gate enforcement
+    +-----------------+
+    |  Multi-Agent     |  <- 7 roles, scheduler, provider abstraction
+    +-----------------+
+    |  Evidence/Report |  <- append-only, persistence, Markdown + JSON
+    +-----------------+
+    |  Validation      |  <- path boundaries, tool output, security scanning
+    +-----------------+
+          |
+    +-----------------+
+    | Tool Adapters    |  <- 7 adapters, shell=False
+    +-----------------+
+          |
+    7 EXISTING TOOLS   <- unchanged, authoritative
 
 ## Seven-Tool Ecosystem
 
 The orchestrator discovers and integrates with seven existing tools:
 
-| Tool | Capability | Platform |
-|------|-----------|----------|
-| agent-error-log | Error tracking, gate enforcement | All |
-| agent-decision-log | Decision tracking | All |
-| agent-log-ai | Log analysis, LLM extraction | All (needs Ollama) |
-| agent-memory | Persistent knowledge | All |
-| agent-blame | Git archaeology | All |
-| agent-diff-gate | Diff validation, security checks | All |
-| agent-sandbox | Isolated execution | Linux only |
+| Tool | Purpose | Platform | Required? |
+|------|---------|----------|:---------:|
+| [agent-error-log](https://github.com/vartiainen1/agent-error-log) | Error tracking and gate enforcement | All | For full workflow |
+| [agent-decision-log](https://github.com/vartiainen1/agent-decision-log) | Decision tracking with rationale | All | For full workflow |
+| [agent-log-ai](https://github.com/vartiainen1/agent-log-ai) | Log analysis, LLM lesson extraction | All | Needs Ollama |
+| [agent-memory](https://github.com/vartiainen1/agent-memory) | Governed persistent knowledge | All | For full workflow |
+| [agent-blame](https://github.com/vartiainen1/agent-blame) | Git archaeology and historical context | All | For full workflow |
+| [agent-diff-gate](https://github.com/vartiainen1/agent-diff-gate) | Pre-commit diff validation | All | For full workflow |
+| [agent-sandbox](https://github.com/vartiainen1/agent-sandbox) | Isolated code execution | Linux only | SECURITY/ENTERPRISE |
 
-The tools are **integrations** — the orchestrator locates them in the workspace
-and invokes them through adapters. It does not bundle, modify, or replace them.
+The tools are **integrations** -- the orchestrator locates them in the workspace and invokes them through adapters. It does not bundle, modify, or replace them.
+
+When a tool is unavailable, the orchestrator continues with the remaining tools and reports which tools are missing via `orchestrator doctor`.
+
+## Supported AI Providers
+
+The orchestrator is **provider-agnostic**. It works with or without an AI provider. Four providers are included:
+
+| Provider | Type | API Key | Description |
+|----------|------|:-------:|-------------|
+| NoneProvider | Deterministic | No | No AI -- agents produce deterministic output |
+| OllamaProvider | Local HTTP | No | Local Ollama models via HTTP |
+| CLIProvider | Generic CLI | No | Any CLI-based AI tool via subprocess |
+| FreebuffProvider | CLI (FreeBuff) | No | FreeBuff CLI -- one supported provider |
+
+**No API key is required for local operation.**
+
+See [docs/PROVIDERS.md](docs/PROVIDERS.md) for how to implement your own AI provider without modifying the core engine.
 
 ## Operating Modes
 
@@ -100,8 +94,7 @@ and invokes them through adapters. It does not bundle, modify, or replace them.
 | approval | no | no | no | **recorded** |
 | evidence level | basic | standard | enhanced | **complete** |
 
-All four modes share 6 inviolable base safety rules that cannot be weakened
-through configuration.
+All four modes share 6 inviolable base safety rules that cannot be weakened through configuration.
 
 ## Multi-Agent System
 
@@ -111,133 +104,68 @@ through configuration.
 - No direct agent-to-agent communication
 - Sequential execution with conflict resolution
 
-See [docs/AGENTS.md](docs/AGENTS.md) for details on agent roles, permissions,
-and the scheduler.
-
-## Quick Start
-
-```bash
-# Show help
-orchestrator --help
-
-# Show version
-orchestrator --version
-
-# Show workspace and tool status
-orchestrator status
-
-# Verify environment
-orchestrator doctor
-
-# Run in SOLO mode (default)
-orchestrator run --mode solo
-
-# Run in DEVELOPMENT mode
-orchestrator run --mode development
-
-# Launch the web dashboard
-orchestrator dashboard
-```
-
-## CLI Commands
-
-```
-orchestrator --help                # show available commands
-orchestrator --version             # show version
-orchestrator status                # workspace, project, and tool status
-orchestrator status --json         # machine-readable status
-orchestrator doctor                # verify environment readiness
-orchestrator run --mode solo       # execute workflow in SOLO mode
-orchestrator run --mode development
-orchestrator run --mode security
-orchestrator run --mode enterprise
-orchestrator modes                 # list available modes with rules
-orchestrator policies [mode]       # show effective policy
-orchestrator history               # list recent runs
-orchestrator show <run-id>         # show run details
-orchestrator evidence <run-id>     # show evidence entries
-orchestrator cancel <run-id>       # cancel interrupted run
-orchestrator recover --list        # list interrupted runs
-orchestrator dashboard             # launch web dashboard (read-only)
-```
-
-## Configuration
-
-Configuration lives in `.orchestrator/config` inside your project:
-
-```ini
-# Operating mode: solo, development, security, enterprise
-mode = solo
-
-# Provider: none, ollama, freebuff, cli
-provider = ollama
-
-# Optional: custom CLI provider settings
-# provider_executable = my-ai-tool
-# provider_args = --flag1 --flag2
-# provider_timeout = 60
-```
-
-Mode selection precedence: CLI `--mode` flag > config file > default (solo).
-
-## Dashboard
-
-The orchestrator includes a read-only web dashboard:
-
-```bash
-orchestrator dashboard                    # default: 127.0.0.1:8520
-orchestrator dashboard --port 9000        # custom port
-orchestrator dashboard --open             # open browser automatically
-```
-
-The dashboard displays:
-- Run list with status summary
-- Run detail with tool call timeline
-- Evidence timeline
-- Tool health status (all 7 tools)
-- System status and configuration
-- Policy comparison across all 4 modes
-
-The dashboard is **read-only** — it cannot execute workflows, tools, or agents.
-It consumes existing persisted data through a stdlib HTTP server.
+See [docs/AGENTS.md](docs/AGENTS.md) for details on agent roles, permissions, and the scheduler.
 
 ## Security Model
 
-- **Zero external dependencies** — Python standard library only
-- **No shell=True** — all subprocess calls use argument lists
-- **No eval/exec/os.system** — AST-verified
-- **Fail closed** — invalid state, missing tools, unsupported sandbox → stop
-- **Evidence-backed** — every important action produces an audit record
-- **No fabricated results** — never claim a tool ran when it didn't
-- **Mandatory safety rules** — 6 base rules inviolable across all modes
-- **Path traversal protection** — validated run IDs and paths
-- **Security scanner** — 26 deterministic patterns across 9 categories
-- **Tool output validation** — null bytes, binary content, size limits
+- **Zero external dependencies** -- Python standard library only
+- **No shell=True** -- all subprocess calls use argument lists
+- **No eval/exec/os.system** -- AST-verified
+- **Fail closed** -- invalid state, missing tools, unsupported sandbox -> stop
+- **Evidence-backed** -- every important action produces an audit record
+- **No fabricated results** -- never claim a tool ran when it did not
+- **Mandatory safety rules** -- 6 base rules inviolable across all modes
+- **Path traversal protection** -- validated run IDs and paths
+- **Security scanner** -- 26 deterministic patterns across 9 categories
+- **Tool output validation** -- null bytes, binary content, size limits
 
 See [SECURITY.md](SECURITY.md) for the complete security model.
 
-## Platform Support
+## Evidence / Persistence / Recovery
 
-| Platform | Status |
-|----------|--------|
-| Windows | Fully supported (agent-sandbox: UNSUPPORTED) |
-| Linux | Fully supported (all 7 tools) |
-| macOS | Expected to work (not actively tested) |
+- **Evidence logging** -- append-only JSONL records of every significant action
+- **Persistence** -- atomic state writes with fsync, survives crashes
+- **Run history** -- browseable via `orchestrator history`
+- **Recovery** -- interrupted runs detected and recoverable via `orchestrator recover`
+- **Cancellation** -- `orchestrator cancel` preserves evidence and cleans up
 
-**agent-sandbox** is Linux-only. On Windows, SECURITY and ENTERPRISE modes
-correctly fail closed when sandbox is mandatory.
+Evidence includes: provider invocations, tool results, policy decisions, gate outcomes, agent actions, workflow state transitions, and error records.
 
-**Ollama** requires a running Ollama instance with at least one model pulled.
-See [Ollama docs](https://ollama.com) for installation.
-
-**FreeBuff** is a CLI-based AI tool. It must be installed and available on
-PATH. See [FreeBuff docs](https://freebuff.com) for installation.
-
-## Development
+## Installation
 
 ```bash
-# Run the complete test suite
-python -m unittest discover -v
+# Create a virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
 
-# Run a specific test module
-python -m unitt
+# Install from the repository
+pip install git+https://github.com/vartiainen1/agent-orchestrator.git
+
+# Or clone and install in development mode
+git clone https://github.com/vartiainen1/agent-orchestrator.git
+cd agent-orchestrator
+pip install -e .
+
+# Verify installation
+orchestrator --version
+orchestrator doctor
+```
+
+### Companion Tools
+
+The seven companion tools are **optional** for basic operation but required for full ecosystem functionality. Clone them as siblings of your project:
+
+```
+my-project/
++-- agent-error-log/      # optional
++-- agent-decision-log/   # optional
++-- agent-log-ai/         # optional (needs Ollama)
++-- agent-memory/         # optional
++-- agent-blame/          # optional
++-- agent-diff-gate/      # optional
++-- agent-sandbox/        # optional (Linux only)
++-- .orchestrator/        # created by orchestrator
+```
+
+The orchestrator discovers tools automatically via workspace detection. Missing tools are re

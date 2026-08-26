@@ -11,7 +11,7 @@ license = { text = "MIT" }
 requires-python = ">=3.11"
 keywords = ["ai", "agents", "orchestrator", "workflow", "cli"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
