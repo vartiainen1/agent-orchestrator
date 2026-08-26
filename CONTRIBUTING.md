@@ -22,7 +22,7 @@ workflows, and records evidence for every significant action.
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
-venv\Scriptsctivate     # Windows
+venv\Scripts\activate     # Windows
 ```
 
 ### Install for Development
