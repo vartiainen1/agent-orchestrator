@@ -168,4 +168,164 @@ my-project/
 +-- .orchestrator/        # created by orchestrator
 ```
 
-The orchestrator discovers tools automatically via workspace detection. Missing tools are re
+The orchestrator discovers tools automatically via workspace detection. Missing tools are reported via `orchestrator doctor` and handled gracefully.
+
+## Quick Start
+
+```bash
+# Install
+pip install -e .
+
+# Check system health
+orchestrator doctor
+
+# Run a workflow
+orchestrator run --mode solo
+
+# Start the dashboard
+orchestrator dashboard
+```
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `orchestrator status` | Show orchestrator and tool status |
+| `orchestrator doctor` | System health check with tool availability |
+| `orchestrator run` | Execute a workflow |
+| `orchestrator modes` | List operating modes and policies |
+| `orchestrator policies` | Show mode policy details |
+| `orchestrator history` | Browse run history |
+| `orchestrator show <RUN_ID>` | Show run details |
+| `orchestrator evidence <RUN_ID>` | Show run evidence timeline |
+| `orchestrator cancel <RUN_ID>` | Cancel a running workflow |
+| `orchestrator recover` | Recover interrupted runs |
+| `orchestrator dashboard` | Start the local web dashboard |
+
+## Dashboard
+
+A read-only web dashboard is included for monitoring orchestrator activity.
+
+```bash
+orchestrator dashboard              # starts on 127.0.0.1:8520
+orchestrator dashboard --port 9000  # custom port
+orchestrator dashboard --open       # open in browser
+orchestrator dashboard --no-refresh # disable auto-refresh
+```
+
+The dashboard displays:
+- Active and recent runs with status
+- Run detail with full lifecycle
+- Evidence timeline for each run
+- Tool health and availability
+- System status and configuration
+- Policy information by mode
+
+The dashboard is **read-only** -- it cannot execute workflows, modify runs, or interact with providers.
+
+## Configuration
+
+The orchestrator uses `.orchestrator/config` in your project directory:
+
+- **provider**: which AI provider to use (`none`, `ollama`, `cli`, `freebuff`)
+- **mode**: default operating mode (`solo`, `development`, `security`, `enterprise`)
+- **project_path**: project root for tool discovery
+
+See [docs/PROVIDERS.md](docs/PROVIDERS.md) for provider configuration details.
+
+## Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Linux | **Fully supported** | All 7 tools available |
+| Windows | **Fully supported** | agent-sandbox: UNSUPPORTED |
+| macOS | Expected | Not actively tested |
+
+**agent-sandbox** requires Linux. On Windows, SECURITY and ENTERPRISE modes correctly block execution when sandbox is unavailable.
+
+## Testing
+
+```bash
+python -m unittest discover -v
+```
+
+The test suite contains **905 tests** covering:
+- Workflow engine and state machine
+- Policy enforcement across all 4 modes
+- Multi-agent execution and permissions
+- Tool adapters and discovery
+- Provider abstraction
+- Persistence, recovery, and evidence
+- Dashboard HTTP endpoints
+- Security scanning and adversarial attacks
+- CLI commands
+
+## Project Structure
+
+```
+agent-orchestrator/
++-- orchestrator/        # core engine
+|   +-- engine.py        # workflow state machine
+|   +-- scheduler.py     # step execution
+|   +-- policy.py        # mode policies
+|   +-- agents.py        # multi-agent system
+|   +-- providers.py     # AI provider abstraction
+|   +-- adapters.py      # tool adapters
+|   +-- discovery.py     # tool workspace discovery
+|   +-- persist.py       # atomic state persistence
+|   +-- evidence.py      # JSONL evidence logging
+|   +-- recovery.py      # interrupted-run detection
+|   +-- report.py        # report generation
+|   +-- scanner.py       # security pattern scanner
+|   +-- state.py         # state types and dataclasses
+|   +-- config.py        # configuration loading
+|   +-- cli.py           # CLI entry point
+|   +-- dashboard.py     # HTTP server
+|   +-- dashboard_ui.py  # HTML rendering
++-- tests/               # 905 tests
++-- docs/                # documentation
++-- .github/             # CI and community standards
++-- README.md
++-- LICENSE
++-- SECURITY.md
++-- DESIGN.md
++-- AGENTS.md
++-- ROADMAP.md
++-- pyproject.toml
+```
+
+## Documentation
+
+- [DESIGN.md](DESIGN.md) -- architecture and design principles
+- [AGENTS.md](AGENTS.md) -- multi-agent system
+- [SECURITY.md](SECURITY.md) -- security model
+- [ROADMAP.md](ROADMAP.md) -- development history
+- [docs/PROVIDERS.md](docs/PROVIDERS.md) -- AI provider integration
+- [docs/AGENTS.md](docs/AGENTS.md) -- agent roles and permissions
+
+## Companion Tools
+
+The seven companion tools are separate repositories maintained alongside the orchestrator:
+
+| Repository | Description |
+|------------|-------------|
+| [agent-error-log](https://github.com/vartiainen1/agent-error-log) | Error tracking and gate enforcement |
+| [agent-decision-log](https://github.com/vartiainen1/agent-decision-log) | Decision tracking with rationale |
+| [agent-log-ai](https://github.com/vartiainen1/agent-log-ai) | Log analysis with LLM extraction |
+| [agent-memory](https://github.com/vartiainen1/agent-memory) | Governed persistent knowledge |
+| [agent-blame](https://github.com/vartiainen1/agent-blame) | Git archaeology and historical context |
+| [agent-diff-gate](https://github.com/vartiainen1/agent-diff-gate) | Pre-commit diff validation |
+| [agent-sandbox](https://github.com/vartiainen1/agent-sandbox) | Isolated code execution (Linux) |
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for the full license text.
+
+## Status
+
+Current version: **v0.1.0**
+
+- 905 tests passing
+- CI green on Python 3.11, 3.12, 3.13
+- Zero external Python dependencies
+- 674+ real-world CLI executions validated
